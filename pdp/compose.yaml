@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: 'postgres:16'
+    container_name: 'db-pdp'
+    environment:
+      - POSTGRES_USER=application
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=sample
+      - PGPASSWORD=secret
+    ports:
+      - '5432:5432'
+    networks:
+      - local-network
+    healthcheck:
+      test: "pg_isready -U application -d sample"
+
+networks:
+  local-network:
+    name: pdp-network
