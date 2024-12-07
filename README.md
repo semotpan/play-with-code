@@ -5,4 +5,5 @@ PlayWithCode is a sandbox for exploring frameworks, languages, and real-world us
 ---
 
 - **openfeign-redis-sample** - demonstrates integrating Redis caching with OpenFeign in a Spring Boot application to optimize external API calls.
-- 
+- **pdp** - a java core tool for parsing big csv files and persist into database
+- **java-core** - java core examples (testing sample advanced low level features)
