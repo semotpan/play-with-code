@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Lambda application that calls the Lambda API.
+Resources:
+#  LocalBucket:
+#    Type: AWS::S3::Bucket
+#    Properties:
+#      BucketName: local-deploy-bucket
+#    UpdateReplacePolicy: Delete
+#    DeletionPolicy: Delete
+  LocalSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: product-incoming-requests
+      VisibilityTimeout: 300
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+  LambdaServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+        - 'Fn::Join':
+            - ''
+            - - 'arn:'
+              - Ref: 'AWS::Partition'
+              - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+  LambdaServiceRoleDefaultPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'sqs:ChangeMessageVisibility'
+              - 'sqs:DeleteMessage'
+              - 'sqs:GetQueueAttributes'
+              - 'sqs:GetQueueUrl'
+              - 'sqs:ReceiveMessage'
+            Effect: Allow
+            Resource:
+              'Fn::GetAtt':
+                - LocalSQS
+                - Arn
+        Version: '2012-10-17'
+      PolicyName: LambdaServiceRoleDefaultPolicy
+      Roles:
+        - Ref: LambdaServiceRole
+  LocalFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/java-dagger-localstack-sample-1.0-SNAPSHOT.jar
+      Handler: io.awssample.handler.SQSProductHandler
+      Runtime: java17
+      Description: Java function
+      MemorySize: 2048
+      Timeout: 10
+      # Function's execution role
+      Role:
+        'Fn::GetAtt':
+          - LambdaServiceRole
+          - Arn
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambda_ReadOnlyAccess
+        - AWSXrayWriteOnlyAccess
+        - AWSLambdaVPCAccessExecutionRole
+    DependsOn:
+      - LambdaServiceRoleDefaultPolicy
+      - LambdaServiceRole
+#      Tracing: Active
+  LambdaSqsEventSourceSqs:
+    Type: 'AWS::Lambda::EventSourceMapping'
+    Properties:
+      EventSourceArn:
+        'Fn::GetAtt':
+          - LocalSQS
+          - Arn
+      FunctionName:
+        Ref: LocalFunction
