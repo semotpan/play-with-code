@@ -1,0 +1,12 @@
+Resources:
+  LocalSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: product-incoming-requests
+      VisibilityTimeout: 300
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+  LocalBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: bucket-test-1

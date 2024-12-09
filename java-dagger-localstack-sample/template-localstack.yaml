@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for SQS, DynamoDB, and Lambda with event source mapping.
+
+Resources:
+  # SQS Queue
+  MyQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: my-sqs-queue
+
+  # DynamoDB Table
+  MyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: my-dynamodb-table
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaExecutionRoleForSQS
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: "*"
+
+  # Lambda Function
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: MySQSProcessor
+      Runtime: java17
+      Handler: io.awssample.handler.SQSProductHandler::handleRequest
+      Code:
+        S3Bucket: localstack-bucket
+        S3Key: java-dagger-localstack-sample-1.0-SNAPSHOT.jar
+      MemorySize: 512
+      Timeout: 60
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: key
+          AWS_SECRET_ACCESS_KEY: secret
+
+  # Lambda Event Source Mapping
+  SQSToLambdaMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt MyQueue.Arn
+      FunctionName: !Ref MyLambdaFunction
+      BatchSize: 5 # Adjust based on your requirements
+      Enabled: true
