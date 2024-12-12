@@ -23,7 +23,7 @@ public final class DynamoProductRepository implements ProductRepository {
     @Override
     public Optional<Product> findById(String id) {
         GetItemResponse getItemResponse = dynamoDbClient.getItem(GetItemRequest.builder()
-                .key(Map.of("id", AttributeValue.builder().s(id).build()))
+                .key(Map.of("PK", AttributeValue.builder().s(id).build()))
                 .tableName(PRODUCT_TABLE_NAME)
                 .build());
 
