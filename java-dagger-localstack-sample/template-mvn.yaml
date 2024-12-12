@@ -1,85 +1,98 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 Description: An AWS Lambda application that calls the Lambda API.
+
 Resources:
-#  LocalBucket:
-#    Type: AWS::S3::Bucket
-#    Properties:
-#      BucketName: local-deploy-bucket
-#    UpdateReplacePolicy: Delete
-#    DeletionPolicy: Delete
-  LocalSQS:
+  # SQS Queue
+  ProductQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: product-incoming-requests
-      VisibilityTimeout: 300
-    UpdateReplacePolicy: Delete
-    DeletionPolicy: Delete
-  LambdaServiceRole:
-    Type: 'AWS::IAM::Role'
+      QueueName: product-sqs-queue
+
+  # DynamoDB Table
+  ProductTable:
+    Type: AWS::DynamoDB::Table
     Properties:
+      TableName: product
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: name
+          AttributeType: S
+        - AttributeName: price
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH  # Partition key
+        - AttributeName: name
+          KeyType: RANGE  # Sort key
+      ProvisionedThroughput:
+        ReadCapacityUnits: 10
+        WriteCapacityUnits: 10
+      GlobalSecondaryIndexes:
+        - IndexName: NameIndex
+          KeySchema:
+            - AttributeName: name
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 10
+            WriteCapacityUnits: 10
+
+  # IAM Role for Lambda
+  ProductLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ProductLambdaExecutionRole
       AssumeRolePolicyDocument:
+        Version: '2012-10-17'
         Statement:
-          - Action: 'sts:AssumeRole'
-            Effect: Allow
+          - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-        Version: '2012-10-17'
-      ManagedPolicyArns:
-        - 'Fn::Join':
-            - ''
-            - - 'arn:'
-              - Ref: 'AWS::Partition'
-              - ':iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
-  LambdaServiceRoleDefaultPolicy:
-    Type: 'AWS::IAM::Policy'
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Action:
-              - 'sqs:ChangeMessageVisibility'
-              - 'sqs:DeleteMessage'
-              - 'sqs:GetQueueAttributes'
-              - 'sqs:GetQueueUrl'
-              - 'sqs:ReceiveMessage'
-            Effect: Allow
-            Resource:
-              'Fn::GetAtt':
-                - LocalSQS
-                - Arn
-        Version: '2012-10-17'
-      PolicyName: LambdaServiceRoleDefaultPolicy
-      Roles:
-        - Ref: LambdaServiceRole
-  LocalFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: target/java-dagger-localstack-sample-1.0-SNAPSHOT.jar
-      Handler: io.awssample.handler.SQSProductHandler
-      Runtime: java17
-      Description: Java function
-      MemorySize: 2048
-      Timeout: 10
-      # Function's execution role
-      Role:
-        'Fn::GetAtt':
-          - LambdaServiceRole
-          - Arn
+            Action: sts:AssumeRole
       Policies:
-        - AWSLambdaBasicExecutionRole
-        - AWSLambda_ReadOnlyAccess
-        - AWSXrayWriteOnlyAccess
-        - AWSLambdaVPCAccessExecutionRole
-    DependsOn:
-      - LambdaServiceRoleDefaultPolicy
-      - LambdaServiceRole
-#      Tracing: Active
-  LambdaSqsEventSourceSqs:
-    Type: 'AWS::Lambda::EventSourceMapping'
+        - PolicyName: ProductLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                Resource: "*"
+
+  # Lambda Function
+  ProductLambdaFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      EventSourceArn:
-        'Fn::GetAtt':
-          - LocalSQS
-          - Arn
-      FunctionName:
-        Ref: LocalFunction
+      FunctionName: ProductSQSProcessor
+      Runtime: java17
+      Handler: io.awssample.handler.SQSProductHandler::handleRequest
+      CodeUri: target/product-lambda-0.0.1-SNAPSHOT.jar
+      MemorySize: 512
+      Timeout: 60
+      Role: !GetAtt ProductLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: key
+          AWS_SECRET_ACCESS_KEY: secret
+          PRODUCT_TABLE_NAME: product
+
+  # Lambda Event Source Mapping
+  SQSToProductLambdaMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt ProductQueue.Arn
+      FunctionName: !Ref ProductLambdaFunction
+      BatchSize: 5
+      Enabled: true

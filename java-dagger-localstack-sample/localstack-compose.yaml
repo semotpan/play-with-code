@@ -13,7 +13,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=secret
       - AWS_DEFAULT_REGION=eu-west-1
       - LAMBDA_EXECUTOR=docker
-      - SERVICES=cloudformation,s3,dynamodb,sns,sqs,lambda,events,iam
+      - SERVICES=cloudformation,s3,dynamodb,sns,sqs,lambda,events,iam,cloudwatch
       - DEBUG=true
     volumes:
       - "$PWD/tmp/localstack:/var/lib/localstack"

@@ -4,9 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.awssample.DaggerProductComponent;
+import io.awssample.service.CreateProductUseCase;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -19,36 +20,41 @@ public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>>
         java.security.Security.setProperty("networkaddress.cache.ttl", "0");
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(SQSProductHandler.class);
+//    private static final Logger logger = LoggerFactory.getLogger(SQSProductHandler.class);
 
     @Inject
     ObjectMapper objectMapper;
 
-//    public SQSProductHandler() {
-//        DaggerProductComponent.builder().build().inject(this);
-//    }
+    @Inject
+    CreateProductUseCase createProductUseCase;
+
+    public SQSProductHandler() {
+        DaggerProductComponent.builder().build().inject(this);
+    }
 
     @Override
     public List<String> handleRequest(SQSEvent event, Context context) {
-//        for (SQSEvent.SQSMessage record : event.getRecords()) {
-//            String messageBody = record.getBody();
-//            String messageId = record.getMessageId();
-//            String receiptHandle = record.getReceiptHandle();
-//            logger.info("SQS Message: {}", messageBody);
-//            logger.info("Message ID: {}", messageId);
-//            logger.info("Receipt Handle: {}", receiptHandle);
-//        }
-
+        // FIXME: use the context logger?
         LambdaLogger logger = context.getLogger();
-        logger.log("EVENT TYPE: " + event.getClass().toString());
+        logger.log("EVENT TYPE: %s".formatted(event.getClass()));
+
         var messagesFound = new ArrayList<String>();
         for(SQSEvent.SQSMessage msg : event.getRecords()){
             messagesFound.add(msg.getBody());
-            logger.log("SQS Message: " +  msg.getBody());
-            logger.log("Message ID: " + msg.getMessageId());
-            logger.log("Receipt Handle: " + msg.getReceiptHandle());
+            logger.log("SQS message received: ID %s, Body: %s, Receipt Handle: %s".formatted(msg.getMessageId(), msg.getBody(), msg.getReceiptHandle()));
         }
-        // FIXME: delete consumed messages?
+
+        for (String msg : messagesFound) {
+            try {
+                var request = objectMapper.readValue(msg, CreateProductRequest.class);
+                createProductUseCase.create(request.name(), request.price());
+            } catch (JsonProcessingException e) {
+                // FIXME: handle this exception?
+                logger.log(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
         return messagesFound;
     }
 }
