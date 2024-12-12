@@ -8,7 +8,7 @@ import java.util.Map;
 
 final class ProductMapper {
 
-    private static final String PK = "PK";
+    private static final String PK = "id";
     private static final String NAME = "name";
     private static final String PRICE = "price";
 

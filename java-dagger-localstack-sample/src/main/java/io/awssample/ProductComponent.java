@@ -2,7 +2,6 @@ package io.awssample;
 
 import dagger.Component;
 import io.awssample.handler.SQSProductHandler;
-import io.awssample.model.Product;
 
 import javax.inject.Singleton;
 
