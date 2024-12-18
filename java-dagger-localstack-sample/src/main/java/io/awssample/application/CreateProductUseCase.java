@@ -1,6 +1,6 @@
-package io.awssample.service;
+package io.awssample.application;
 
-import io.awssample.model.Product;
+import io.awssample.domain.Product;
 
 import java.math.BigDecimal;
 

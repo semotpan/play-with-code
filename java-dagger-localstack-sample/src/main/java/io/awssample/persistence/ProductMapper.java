@@ -1,6 +1,6 @@
-package io.awssample.repository;
+package io.awssample.persistence;
 
-import io.awssample.model.Product;
+import io.awssample.domain.Product;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.math.BigDecimal;
