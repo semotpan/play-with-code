@@ -1,4 +1,4 @@
-package io.awssample.model;
+package io.awssample.domain;
 
 import java.math.BigDecimal;
 import java.util.UUID;

@@ -1,8 +1,7 @@
 package io.awssample.application;
 
-import io.awssample.model.Product;
-import io.awssample.repository.ProductRepository;
-import io.awssample.service.CreateProductService;
+import io.awssample.domain.Product;
+import io.awssample.persistence.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

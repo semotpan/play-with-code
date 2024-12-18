@@ -1,6 +1,6 @@
-package io.awssample.repository;
+package io.awssample.persistence;
 
-import io.awssample.model.Product;
+import io.awssample.domain.Product;
 
 import java.util.Optional;
 

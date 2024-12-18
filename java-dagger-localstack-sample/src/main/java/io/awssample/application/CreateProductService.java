@@ -1,7 +1,7 @@
-package io.awssample.service;
+package io.awssample.application;
 
-import io.awssample.model.Product;
-import io.awssample.repository.ProductRepository;
+import io.awssample.domain.Product;
+import io.awssample.persistence.ProductRepository;
 
 import java.math.BigDecimal;
 

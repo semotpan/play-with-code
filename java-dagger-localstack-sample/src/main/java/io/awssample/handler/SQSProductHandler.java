@@ -7,7 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.awssample.DaggerProductComponent;
-import io.awssample.service.CreateProductUseCase;
+import io.awssample.application.CreateProductUseCase;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
