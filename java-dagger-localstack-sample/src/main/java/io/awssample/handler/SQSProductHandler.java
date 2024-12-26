@@ -8,10 +8,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.awssample.DaggerProductComponent;
 import io.awssample.application.CreateProductUseCase;
+import io.awssample.persistence.ProductRepository;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>> {
 
@@ -27,6 +29,9 @@ public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>>
 
     @Inject
     CreateProductUseCase createProductUseCase;
+
+    @Inject
+    ProductRepository snowflakeRepository;
 
     public SQSProductHandler() {
         DaggerProductComponent.builder().build().inject(this);
@@ -54,6 +59,9 @@ public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>>
                 throw new RuntimeException(e);
             }
         }
+
+        var asdasdas = snowflakeRepository.findById("asdasdas");
+        logger.log(asdasdas.toString());
 
         return messagesFound;
     }

@@ -6,7 +6,7 @@ import io.awssample.handler.SQSProductHandler;
 import javax.inject.Singleton;
 
 @Singleton
-@Component(modules = ProductModule.class)
+@Component(modules = {ProductModule.class, SnowflakeModule.class})
 public interface ProductComponent {
 
     void inject(SQSProductHandler sqsProductHandler);
