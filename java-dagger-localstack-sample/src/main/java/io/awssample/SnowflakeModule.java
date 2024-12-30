@@ -13,14 +13,22 @@ import javax.inject.Singleton;
 public class SnowflakeModule {
 
     // FIXME: use application.properties
+    static {
+        try {
+            Class.forName("net.snowflake.client.jdbc.SnowflakeDriver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Provides
     @Singleton
     HikariConfig provideHikariConfig() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:snowflake://localhost:8080");
-        config.setUsername("local_user");
-        config.setPassword("local_password");
+        config.setJdbcUrl("jdbc:snowflake://snowflake.localhost.localstack.cloud:4567");
+        config.setUsername("test");
+        config.setPassword("test");
+        config.setDriverClassName("net.snowflake.client.jdbc.SnowflakeDriver");
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setIdleTimeout(30000);

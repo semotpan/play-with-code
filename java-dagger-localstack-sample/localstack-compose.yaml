@@ -1,10 +1,5 @@
 version: "3.8"
 
-networks:
-  shared_network:
-    name: shared_network
-    driver: bridge
-
 services:
   localstack:
     container_name: localstack
@@ -30,12 +25,20 @@ services:
 
   snowflake:
     container_name: "snowflake"
-    image: localstack/snowflake
+    image: localstack/snowflake:latest
     ports:
-      - "127.0.0.1:4566:4566"
-      - "127.0.0.1:4510-4559:4510-4559"
+      - "127.0.0.1:4567:4566"
+#      - "127.0.0.1:4510-4559:4510-4559"  # external service port range
       - "127.0.0.1:443:443"
     environment:
-      - LOCALSTACK_AUTH_TOKEN=token
+#      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?}
+      - LOCALSTACK_AUTH_TOKEN=ls-jiWukUkI-moVi-7324-6569-ToWOGAPo5956
     volumes:
       - "./volume:/var/lib/localstack"
+    extra_hosts:
+      - "snowflake.localhost.localstack.cloud:127.0.0.1"  # Alias for LocalStack
+
+networks:
+  shared_network:
+    name: shared_network
+    driver: bridge

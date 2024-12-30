@@ -13,7 +13,6 @@ import io.awssample.persistence.ProductRepository;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>> {
 
@@ -31,7 +30,7 @@ public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>>
     CreateProductUseCase createProductUseCase;
 
     @Inject
-    ProductRepository snowflakeRepository;
+    ProductRepository snowflakeProductRepository;
 
     public SQSProductHandler() {
         DaggerProductComponent.builder().build().inject(this);
@@ -60,7 +59,7 @@ public class SQSProductHandler implements RequestHandler<SQSEvent, List<String>>
             }
         }
 
-        var asdasdas = snowflakeRepository.findById("asdasdas");
+        var asdasdas = snowflakeProductRepository.findById("asdasdas");
         logger.log(asdasdas.toString());
 
         return messagesFound;

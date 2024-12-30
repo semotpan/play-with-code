@@ -20,7 +20,7 @@ public class SnowflakeProductRepository implements ProductRepository {
     public Optional<Product> findById(String id) {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery("SELECT * FROM test_table")) {
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM product WHERE id=%s".formatted(id))) {
 
             while (resultSet.next()) {
                 var id1 = resultSet.getString("id");
