@@ -17,7 +17,7 @@ Ensure the following tools are installed:
 
 ---
 
-## Getting Started
+_## Getting Started
 
 ### Step 1: Configure AWS CLI for LocalStack
 Set up a LocalStack profile for AWS CLI:
@@ -36,7 +36,7 @@ Run the following command from the project's root directory to start the LocalSt
 docker compose -f localstack-compose.yaml up
 ```
 
----
+---_
 
 ### Step 3: Deploy the Application
 
