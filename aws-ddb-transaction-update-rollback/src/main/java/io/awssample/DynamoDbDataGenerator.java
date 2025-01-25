@@ -1,42 +1,29 @@
 package io.awssample;
 
 import io.awssample.domain.Order;
-import software.amazon.awssdk.auth.credentials.*;
-import software.amazon.awssdk.core.SdkSystemSetting;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
 import java.net.URI;
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
-import software.amazon.awssdk.services.dynamodb.model.DynamoDbRequest;
-import software.amazon.awssdk.services.dynamodb.model.DynamoDbResponse;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
+import static software.amazon.awssdk.services.dynamodb.model.StreamViewType.NEW_AND_OLD_IMAGES;
 
 public class DynamoDbDataGenerator {
 
     private static final String TABLE_NAME = "order";
 
-    private static final List<String> STATUSES = Arrays.asList("PLACED", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED");
-    private static final List<String> PRODUCTS = Arrays.asList("Product1", "Product2", "Product3", "Product4", "Product5");
-
     public static void main(String[] args) {
 
         // Credentials that can be replaced with real AWS values. (To be handled properly and not hardcoded.)
-        // These can be skipped altogether for LocalStack, but we generally want to avoid discrepancies with production code.
         final String ACCESS_KEY = "key";
         final String SECRET_KEY = "secret";
 
@@ -61,8 +48,8 @@ public class DynamoDbDataGenerator {
 
             DynamoDbTable<Order> orderTable = enhancedClient.table("order", TableSchema.fromBean(Order.class));
 
-            IntStream.range(0, 1000).forEach(i -> {
-                String productNumber = "Product-" + (i / 100);
+            IntStream.range(0, 10_000).forEach(i -> {
+                String productNumber = "Product-" + (i / 1000);
                 String status = switch (i % 5) {
                     case 0 -> "PLACED";
                     case 1 -> "PROCESSING";
@@ -71,10 +58,13 @@ public class DynamoDbDataGenerator {
                     default -> "CANCELLED";
                 };
 
-                Order order = new Order(UUID.randomUUID().toString(), productNumber, status, "Product Name", (i % 10) + 1);
+                Order order = new Order(UUID.randomUUID().toString(), productNumber, status, "Product Name", (i % 100) + 1);
 
                 orderTable.putItem(order);
             });
+
+            Order order1001 = new Order(UUID.randomUUID().toString(), "Product-1", "DELIVERED", "Product Name", 1);
+            orderTable.putItem(order1001);
 
             System.out.println("Data generation completed.");
         }
@@ -85,7 +75,7 @@ public class DynamoDbDataGenerator {
                 .tableName(TABLE_NAME)
                 .keySchema(
                         KeySchemaElement.builder()
-                                .attributeName("id")
+                                .attributeName("orderId")
                                 .keyType(KeyType.HASH) // Partition key
                                 .build(),
                         KeySchemaElement.builder()
@@ -95,7 +85,7 @@ public class DynamoDbDataGenerator {
                 )
                 .attributeDefinitions(
                         AttributeDefinition.builder()
-                                .attributeName("id")
+                                .attributeName("orderId")
                                 .attributeType(ScalarAttributeType.S)
                                 .build(),
                         AttributeDefinition.builder()
@@ -104,6 +94,10 @@ public class DynamoDbDataGenerator {
                                 .build()
                 )
                 .billingMode(BillingMode.PAY_PER_REQUEST)
+                .streamSpecification(StreamSpecification.builder()
+                        .streamEnabled(true)
+                        .streamViewType(NEW_AND_OLD_IMAGES)
+                        .build())
                 .build();
 
         dynamoDbClient.createTable(createTableRequest);

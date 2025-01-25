@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @Component(modules = {ApplicationModule.class, PersistenceModule.class})
-public interface TransactionalComponent {
+public interface OrderSyncComponent {
 
     void inject(SqsLockHandler handler);
 

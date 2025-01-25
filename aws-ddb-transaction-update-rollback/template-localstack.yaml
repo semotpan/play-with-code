@@ -6,7 +6,7 @@ Resources:
   ProductQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: product-sqs-queue
+      QueueName: orderLocked_fifo
 
 #  # DynamoDB Table
 #  OrderTable:
@@ -24,6 +24,8 @@ Resources:
 #        - AttributeName: productNumber
 #          KeyType: RANGE  # Sort key
 #      BillingMode: PAY_PER_REQUEST
+#      StreamSpecification:
+#        StreamViewType: NEW_AND_OLD_IMAGES # Enables streams with both new and old images of modified items
 
   # IAM Role for Lambda
   OrderLambdaExecutionRole:
@@ -53,6 +55,10 @@ Resources:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                   - dynamodb:GetItem
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
                 Resource: "*"
 
   # Lambda Function
@@ -61,7 +67,7 @@ Resources:
     Properties:
       FunctionName: OrderSQSProcessor
       Runtime: java17
-      Handler: io.awssample.handler.SQSLockHandler::handleRequest
+      Handler: io.awssample.handler.SqsLockHandler::handleRequest
       Code:
         S3Bucket: artifact-storage-bucket
         S3Key: order-sync-lambda-1.0-SNAPSHOT.jar
@@ -81,5 +87,5 @@ Resources:
     Properties:
       EventSourceArn: !GetAtt ProductQueue.Arn
       FunctionName: !Ref OrderLambdaFunction
-      BatchSize: 5
+      BatchSize: 1
       Enabled: true

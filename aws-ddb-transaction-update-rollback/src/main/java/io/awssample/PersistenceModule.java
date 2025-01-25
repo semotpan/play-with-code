@@ -6,6 +6,7 @@ import io.awssample.persistence.DynamoDbOrderRepository;
 import io.awssample.persistence.OrderRepository;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.core.SdkSystemSetting;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -27,7 +28,15 @@ public class PersistenceModule {
 
     @Provides
     @Singleton
-    public static OrderRepository orderRepository(DynamoDbClient dynamoDbClient) {
-        return new DynamoDbOrderRepository(dynamoDbClient);
+    public static DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
+        return DynamoDbEnhancedClient.builder()
+                .dynamoDbClient(dynamoDbClient)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    public static OrderRepository orderRepository(DynamoDbClient dynamoDbClient, DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+        return new DynamoDbOrderRepository(dynamoDbClient, dynamoDbEnhancedClient);
     }
 }
