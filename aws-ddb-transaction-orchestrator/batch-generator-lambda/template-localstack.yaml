@@ -8,24 +8,43 @@ Resources:
     Properties:
       QueueName: orderBatchUpdateQueue
 
-#  # DynamoDB Table
-#  OrderTransactionBatchesTable:
+  # DynamoDB Table
+#  OrderTable:
 #    Type: AWS::DynamoDB::Table
 #    Properties:
-#      TableName: order-transaction-batches
+#      TableName: order
 #      AttributeDefinitions:
-#        - AttributeName: BatchId
+#        - AttributeName: OrderId
 #          AttributeType: S
 #        - AttributeName: CustomerNumber
 #          AttributeType: S
 #      KeySchema:
-#        - AttributeName: BatchId
+#        - AttributeName: OrderId
 #          KeyType: HASH  # Partition key
 #        - AttributeName: CustomerNumber
 #          KeyType: RANGE  # Sort key
 #      BillingMode: PAY_PER_REQUEST
 #      StreamSpecification:
-#        StreamViewType: NEW_AND_OLD_IMAGES # Enables streams with both new and old images of modified items
+#        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # DynamoDB Table for Batches
+  OrderTransactionBatchesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: order-transaction-batches
+      AttributeDefinitions:
+        - AttributeName: BatchId
+          AttributeType: S
+        - AttributeName: CustomerNumber
+          AttributeType: S
+      KeySchema:
+        - AttributeName: BatchId
+          KeyType: HASH  # Partition key
+        - AttributeName: CustomerNumber
+          KeyType: RANGE  # Sort key
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
 
   # IAM Role for Lambda
   BatchGeneratorLambdaExecutionRole:
