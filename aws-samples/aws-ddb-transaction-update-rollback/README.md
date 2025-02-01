@@ -115,6 +115,11 @@ aws --profile localstack --endpoint-url=http://localhost:4566 dynamodb scan \
   --expression-attribute-values '{":productNumber":{"S":"Product-1"}}'
 ```
 
+#### Count all items form db
+```shell
+aws --profile localstack --endpoint-url=http://localhost:4566 dynamodb scan --table-name order --select COUNT
+```
+
 #### Create Event Source Mapping for Lambda
 
 ```bash
