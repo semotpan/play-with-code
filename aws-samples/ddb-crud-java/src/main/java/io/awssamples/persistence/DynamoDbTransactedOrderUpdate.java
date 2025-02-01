@@ -1,13 +1,7 @@
 package io.awssamples.persistence;
 
 import io.awssamples.domain.Order;
-import io.awssamples.domain.Orders;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.Expression;
-import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.enhanced.dynamodb.model.PageIterable;
-import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest;
+import io.awssamples.domain.TransactedOrderUpdate;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
@@ -21,37 +15,16 @@ import java.util.stream.Collectors;
 
 import static software.amazon.awssdk.services.dynamodb.model.ReturnValuesOnConditionCheckFailure.ALL_OLD;
 
-public class DynamoDbOrdersRepository implements Orders {
+public class DynamoDbTransactedOrderUpdate implements TransactedOrderUpdate {
 
     private final DynamoDbClient dynamoDbClient;
-    private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 
-    private final DynamoDbTable<Order> orderTable;
-
-    public DynamoDbOrdersRepository(DynamoDbClient dynamoDbClient, DynamoDbEnhancedClient dynamoDbEnhancedClient) {
+    public DynamoDbTransactedOrderUpdate(DynamoDbClient dynamoDbClient) {
         this.dynamoDbClient = dynamoDbClient;
-        this.dynamoDbEnhancedClient = dynamoDbEnhancedClient;
-        this.orderTable = dynamoDbEnhancedClient.table(Order.TABLE_NAME, TableSchema.fromBean(Order.class));
     }
 
     @Override
-    public PageIterable<Order> find(String productNumber, int pageSize) {
-        if (pageSize <= 0 || pageSize > 100) {
-            pageSize = 100;
-        }
-
-        ScanEnhancedRequest scanEnhancedRequest = ScanEnhancedRequest.builder()
-                .filterExpression(Expression.builder()
-                        .expression("#ProductNumber = :productNumber")
-                        .putExpressionName("#ProductNumber", Order.PRODUCT_NUMBER_FIELD_NAME)
-                        .putExpressionValue(":productNumber", AttributeValue.fromS(productNumber))
-                        .build())
-                .build();
-        return orderTable.scan(scanEnhancedRequest);
-    }
-
-    @Override
-    public boolean transactUpdate(List<Order> batch, UUID transactionToken) {
+    public boolean update(List<Order> batch, UUID transactionToken) {
         // Prepare the transact write items
         List<TransactWriteItem> transactWriteItems = batch.stream()
                 .map(order -> Update.builder()

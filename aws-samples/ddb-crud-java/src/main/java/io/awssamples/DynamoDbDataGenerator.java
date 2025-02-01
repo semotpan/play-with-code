@@ -1,104 +1,172 @@
 package io.awssamples;
 
+import com.github.javafaker.Faker;
 import io.awssamples.domain.Order;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.core.internal.waiters.ResponseOrException;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 import software.amazon.awssdk.services.dynamodb.model.*;
+import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 
-import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.stream.IntStream;
-
-import static software.amazon.awssdk.services.dynamodb.model.StreamViewType.NEW_AND_OLD_IMAGES;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DynamoDbDataGenerator {
 
+    static final Faker faker = new Faker();
+
     public static void main(String[] args) {
+//        createTable();
 
-        // Credentials that can be replaced with real AWS values. (To be handled properly and not hardcoded.)
-        final String ACCESS_KEY = "key";
-        final String SECRET_KEY = "secret";
+        Main.measureExecution(DynamoDbDataGenerator::generateDataInParallel);
+//        Main.measureExecution(DynamoDbDataGenerator::generateData);
+    }
 
-        // Creating the AWS Credentials provider, using the above access and secret keys.
-        AwsCredentialsProvider credentials = StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(ACCESS_KEY, SECRET_KEY));
+    private static void generateData() {
+        try (var dynamoDbClient = AwsClientProvider.dynamoDbClient()) {
+            var enhancedClient = AwsClientProvider.dynamoDbEnhancedClient(dynamoDbClient);
 
-        // Selected region.
-        Region region = Region.EU_WEST_1;
+            DynamoDbTable<Order> orderTable = enhancedClient.table(Order.TABLE_NAME, TableSchema.fromBean(Order.class));
 
-        try (DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
-                .region(region)
-                .credentialsProvider(credentials)
-                .endpointOverride(URI.create("https://localhost.localstack.cloud:4566"))
-                .build()) {
+            Map<String, Integer> map = Map.of(
+                    "ProductNumber-1", 500_000,
+                    "ProductNumber-2", 10_000
+            );
 
-            DynamoDbEnhancedClient enhancedClient = DynamoDbEnhancedClient.builder()
-                    .dynamoDbClient(dynamoDbClient)
-                    .build();
+            map.forEach((productNumber, count) -> {
+                for (var i = 0; i < count; i++) {
+                    var orderBuilder = WriteBatch.builder(Order.class).mappedTableResource(orderTable);
 
-            createTable(dynamoDbClient);
+                    for (var batchCounter = 0; batchCounter < 25 && i < count; batchCounter++, i++) {
+                        String status = switch (i % 5) {
+                            case 0 -> "PLACED";
+                            case 1 -> "PROCESSING";
+                            case 2 -> "SHIPPED";
+                            case 3 -> "DELIVERED";
+                            default -> "CANCELLED";
+                        };
+                        var order = new Order(UUID.randomUUID().toString(),
+                                productNumber, status, faker.commerce().productName(), (i % 1000) + 1);
 
-            DynamoDbTable<Order> orderTable = enhancedClient.table("order", TableSchema.fromBean(Order.class));
+                        orderBuilder.addPutItem(order);
+                    }
 
-            IntStream.range(0, 10_000).forEach(i -> {
-                String productNumber = "Product-" + (i / 1000);
-                String status = switch (i % 5) {
-                    case 0 -> "PLACED";
-                    case 1 -> "PROCESSING";
-                    case 2 -> "SHIPPED";
-                    case 3 -> "DELIVERED";
-                    default -> "CANCELLED";
-                };
-
-                Order order = new Order(UUID.randomUUID().toString(), productNumber, status, "Product Name", (i % 100) + 1);
-
-                orderTable.putItem(order);
+                    enhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest
+                            .builder()
+                            .writeBatches(orderBuilder.build())
+                            .build());
+                }
             });
-
-            Order order1001 = new Order(UUID.randomUUID().toString(), "Product-1", "DELIVERED", "Product Name", 1);
-            orderTable.putItem(order1001);
-
             System.out.println("Data generation completed.");
         }
     }
 
-    private static void createTable(DynamoDbClient dynamoDbClient) {
-        CreateTableRequest createTableRequest = CreateTableRequest.builder()
-                .tableName(Order.TABLE_NAME)
-                .keySchema(
-                        KeySchemaElement.builder()
-                                .attributeName("orderId")
-                                .keyType(KeyType.HASH) // Partition key
-                                .build(),
-                        KeySchemaElement.builder()
-                                .attributeName("productNumber")
-                                .keyType(KeyType.RANGE) // Sort key
-                                .build()
-                )
-                .attributeDefinitions(
-                        AttributeDefinition.builder()
-                                .attributeName("orderId")
-                                .attributeType(ScalarAttributeType.S)
-                                .build(),
-                        AttributeDefinition.builder()
-                                .attributeName("productNumber")
-                                .attributeType(ScalarAttributeType.S)
-                                .build()
-                )
-                .billingMode(BillingMode.PAY_PER_REQUEST)
-                .streamSpecification(StreamSpecification.builder()
-                        .streamEnabled(true)
-                        .streamViewType(NEW_AND_OLD_IMAGES)
-                        .build())
-                .build();
+    private static void generateDataInParallel() {
 
-        dynamoDbClient.createTable(createTableRequest);
-        System.out.println("Table " + Order.TABLE_NAME + " created successfully.");
+        System.out.println("Generating data in parallel.");
+        try (var dynamoDbClient = AwsClientProvider.dynamoDbClient();
+             ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())) {
+            var enhancedClient = AwsClientProvider.dynamoDbEnhancedClient(dynamoDbClient);
+
+            DynamoDbTable<Order> orderTable = enhancedClient.table(Order.TABLE_NAME, TableSchema.fromBean(Order.class));
+
+            Map<String, Integer> map = Map.of(
+                    "ProductNumber-1", 500_000,
+                    "ProductNumber-2", 10_000
+            );
+
+
+            List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+            map.forEach((productNumber, count) -> {
+                for (int i = 0; i < count; i += 25) {
+                    int finalI = i;
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        var orderBuilder = WriteBatch.builder(Order.class).mappedTableResource(orderTable);
+
+                        for (int batchCounter = 0; batchCounter < 25 && (finalI + batchCounter) < count; batchCounter++) {
+                            String status = switch (batchCounter % 5) {
+                                case 0 -> "PLACED";
+                                case 1 -> "PROCESSING";
+                                case 2 -> "SHIPPED";
+                                case 3 -> "DELIVERED";
+                                default -> "CANCELLED";
+                            };
+                            var order = new Order(UUID.randomUUID().toString(),
+                                    productNumber, status, faker.commerce().productName(), ((finalI + batchCounter) % 1000) + 1);
+                            orderBuilder.addPutItem(order);
+                        }
+
+                        enhancedClient.batchWriteItem(BatchWriteItemEnhancedRequest.builder()
+                                .writeBatches(orderBuilder.build())
+                                .build());
+                    }, executor));
+                }
+            });
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            executor.shutdown();
+            System.out.println("Data generation completed.");
+        }
+    }
+
+    private static void createTable() {
+        try (var dynamoDbClient = AwsClientProvider.dynamoDbClient()) {
+            CreateTableRequest createTableRequest = CreateTableRequest.builder()
+                    .tableName(Order.TABLE_NAME)
+                    .keySchema(
+                            KeySchemaElement.builder()
+                                    .attributeName(Order.ORDER_ID_FIELD_NAME)
+                                    .keyType(KeyType.HASH) // Partition key
+                                    .build(),
+                            KeySchemaElement.builder()
+                                    .attributeName(Order.PRODUCT_NUMBER_FIELD_NAME)
+                                    .keyType(KeyType.RANGE) // Sort key
+                                    .build()
+                    )
+                    .attributeDefinitions(
+                            AttributeDefinition.builder()
+                                    .attributeName(Order.ORDER_ID_FIELD_NAME)
+                                    .attributeType(ScalarAttributeType.S)
+                                    .build(),
+                            AttributeDefinition.builder()
+                                    .attributeName(Order.PRODUCT_NUMBER_FIELD_NAME)
+                                    .attributeType(ScalarAttributeType.S)
+                                    .build()
+                    )
+                    .billingMode(BillingMode.PAY_PER_REQUEST)
+                    .build();
+
+            dynamoDbClient.createTable(createTableRequest);
+            System.out.println("Table " + Order.TABLE_NAME + " created successfully.");
+        }
+    }
+
+    private static void createTABLE() {
+        try (var dynamoDbClient = AwsClientProvider.dynamoDbClient()) {
+            var enhancedClient = AwsClientProvider.dynamoDbEnhancedClient(dynamoDbClient);
+            var orderTable = enhancedClient.table(Order.TABLE_NAME, TableSchema.fromBean(Order.class));
+
+            // Create the DynamoDB table using the 'orderTable' DynamoDbTable instance.
+            orderTable.createTable();
+
+            try (DynamoDbWaiter waiter = DynamoDbWaiter.builder().client(dynamoDbClient).build()) { // DynamoDbWaiter is Autocloseable
+                ResponseOrException<DescribeTableResponse> response = waiter
+                        .waitUntilTableExists(builder -> builder.tableName(Order.TABLE_NAME).build())
+                        .matched();
+                DescribeTableResponse tableDescription = response.response().orElseThrow(
+                        () -> new RuntimeException("%s table was not created.".formatted(Order.TABLE_NAME)));
+                // The actual error can be inspected in response.exception()
+                System.out.printf("%s table was created.\n", Order.TABLE_NAME);
+            }
+
+        }
     }
 }
