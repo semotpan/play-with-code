@@ -4,6 +4,13 @@
 aws --endpoint-url=http://localhost:4566 --profile localstack s3 mb s3://artifact-storage-bucket
 ```
 
+### Step 3.1: Build the Project
+
+```bash
+sdk use java 17.0.13-tem
+mvn clean package
+```
+
 ### Step 3.3: Upload the JAR File to S3
 
 ```bash
