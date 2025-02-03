@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for SQS, DynamoDB, and Lambda with event source mapping.
+
+Resources:
+  # SQS Queue
+  OrderBatchUpdateQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: orderBatchUpdateQueue
+
+  # DynamoDB Table
+#  OrderTable:
+#    Type: AWS::DynamoDB::Table
+#    Properties:
+#      TableName: order
+#      AttributeDefinitions:
+#        - AttributeName: OrderId
+#          AttributeType: S
+#        - AttributeName: CustomerNumber
+#          AttributeType: S
+#      KeySchema:
+#        - AttributeName: OrderId
+#          KeyType: HASH  # Partition key
+#        - AttributeName: CustomerNumber
+#          KeyType: RANGE  # Sort key
+#      BillingMode: PAY_PER_REQUEST
+#      StreamSpecification:
+#        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # DynamoDB Table for Batches
+  OrderTransactionBatchesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: order-transaction-batches
+      AttributeDefinitions:
+        - AttributeName: BatchId
+          AttributeType: S
+        - AttributeName: CustomerNumber
+          AttributeType: S
+      KeySchema:
+        - AttributeName: BatchId
+          KeyType: HASH  # Partition key
+        - AttributeName: CustomerNumber
+          KeyType: RANGE  # Sort key
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # IAM Role for Lambda
+  BatchGeneratorLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: BatchGeneratorLambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BatchGeneratorLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: "*"
+
+  # Lambda Function
+  BatchGeneratorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BatchGeneratorLambda
+      Runtime: java17
+      Handler: io.awssample.handler.BatchOrderHandler::handleRequest
+      Code:
+        S3Bucket: artifact-storage-bucket
+        S3Key: batch-generator-lambda-1.0-SNAPSHOT.jar
+      MemorySize: 512
+      Timeout: 60
+      Role: !GetAtt BatchGeneratorLambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: eu-west-1
+          AWS_ACCESS_KEY_ID: key
+          AWS_SECRET_ACCESS_KEY: secret
+          ORDER_TABLE_NAME: order
+
+  # Lambda Event Source Mapping
+  QueueToBatchGeneratorLambdaMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt OrderBatchUpdateQueue.Arn
+      FunctionName: !Ref BatchGeneratorLambda
+      BatchSize: 1
+      Enabled: true
