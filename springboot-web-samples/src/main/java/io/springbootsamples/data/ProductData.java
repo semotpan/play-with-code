@@ -21,36 +21,36 @@ public class ProductData {
 
     @PostConstruct
     public void loadProducts() {
-        people.add(new Person(1L, "Alice", 25));
-        people.add(new Person(2L, "Bob", 30));
-        people.add(new Person(3L, "Charlie", 22));
-        people.add(new Person(4L, "David", 35));
-        people.add(new Person(5L, "Eva", 28));
-        people.add(new Person(6L, "Frank", 40));
-        people.add(new Person(7L, "Grace", 19));
-        people.add(new Person(8L, "Henry", 27));
-        people.add(new Person(9L, "Isabella", 33));
-        people.add(new Person(10L, "Jack", 45));
-        people.add(new Person(11L, "Karen", 29));
-        people.add(new Person(12L, "Leo", 50));
-        people.add(new Person(13L, "Mia", 26));
-        people.add(new Person(14L, "Nathan", 23));
-        people.add(new Person(15L, "Olivia", 31));
-        people.add(new Person(16L, "Paul", 41));
-        people.add(new Person(17L, "Quinn", 38));
-        people.add(new Person(18L, "Rachel", 24));
-        people.add(new Person(19L, "Steve", 37));
-        people.add(new Person(20L, "Tina", 21));
-        people.add(new Person(21L, "Umar", 48));
-        people.add(new Person(22L, "Vera", 36));
-        people.add(new Person(23L, "Will", 32));
-        people.add(new Person(24L, "Xena", 44));
-        people.add(new Person(25L, "Yusuf", 39));
-        people.add(new Person(26L, "Zara", 20));
-        people.add(new Person(27L, "Ethan", 42));
-        people.add(new Person(28L, "Sophia", 34));
-        people.add(new Person(29L, "Daniel", 46));
-        people.add(new Person(30L, "Emma", 43));
+        people.add(new Person(1L, "Alice", 25, false, 20));
+        people.add(new Person(2L, "Bob", 30, true, 99));
+        people.add(new Person(3L, "Charlie", 22, null, 0));
+        people.add(new Person(4L, "David", 35, false, 25));
+        people.add(new Person(5L, "Eva", 28, false, 21));
+        people.add(new Person(6L, "Frank", 40, false, 19));
+        people.add(new Person(7L, "Grace", 19, false, 10));
+        people.add(new Person(8L, "Henry", 27, false, 15));
+        people.add(new Person(9L, "Isabella", 33, false, 15));
+        people.add(new Person(10L, "Jack", 45, false, 15));
+        people.add(new Person(11L, "Karen", 29, false, 15));
+        people.add(new Person(12L, "Leo", 50, false, 15));
+        people.add(new Person(13L, "Mia", 26, false, 15));
+        people.add(new Person(14L, "Nathan", 23, false, 15));
+        people.add(new Person(15L, "Olivia", 31, false, 15));
+        people.add(new Person(16L, "Paul", 41, false, 15));
+        people.add(new Person(17L, "Quinn", 38, false, 15));
+        people.add(new Person(18L, "Rachel", 24, false, 15));
+        people.add(new Person(19L, "Steve", 37, false, 15));
+        people.add(new Person(20L, "Tina", 21, false, 15));
+        people.add(new Person(21L, "Umar", 48, true, 99));
+        people.add(new Person(22L, "Vera", 36, true, 99));
+        people.add(new Person(23L, "Will", 32, null, 99));
+        people.add(new Person(24L, "Xena", 44, true, 99));
+        people.add(new Person(25L, "Yusuf", 39, true, 100));
+        people.add(new Person(26L, "Zara", 20, true, 99));
+        people.add(new Person(27L, "Ethan", 42, true, 99));
+        people.add(new Person(28L, "Sophia", 34, true, 99));
+        people.add(new Person(29L, "Daniel", 46, true, 80));
+        people.add(new Person(30L, "Emma", 43, true, 99));
     }
 
     public List<Person> values() {
