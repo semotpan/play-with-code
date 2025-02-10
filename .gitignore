@@ -58,3 +58,6 @@ build/
 .vscode/
 
 /htmlReport/
+
+**/tmp/**
+*/target/**
