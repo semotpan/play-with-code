@@ -59,4 +59,5 @@ build/
 
 /htmlReport/
 
-**/tmp/*
+**/tmp/**
+*/target/**
