@@ -27,7 +27,24 @@ Ensure Docker is running, then execute:
 docker compose -f compose.yaml up -d
 ```
 
-### 3️⃣ Delete CloudFormation Stack
+### 2️⃣ Generate Data
+Run main class to generate about 500,000 items (it could take some time):
+```shell
+io.awssamples.DynamoDbDataGenerator
+```
+
+### 3️⃣ Run Benchmarks
+Package the application:
+```shell
+./mvnw clean package
+```
+
+### 4️⃣ Run Jar to get benchmarks
+```shell
+java -jar target/ddb-crud-java-1.0-SNAPSHOT.jar
+```
+
+### 5️⃣ Delete CloudFormation Stack
 
 Run the following AWS CLI command to delete the CloudFormation stack:
 ```shell
@@ -35,8 +52,8 @@ aws --profile localstack --endpoint-url=http://localhost:4566 cloudformation \
 delete-stack --stack-name orders-sample
 ```
 
-### 4️⃣ Drop Docker Compose with volumes
-D Docker is running, then execute:
+### 6️⃣ Drop Docker Compose with Volumes
+If Docker is running, then execute:
 ```shell
 docker compose -f compose.yaml down -v
 ```

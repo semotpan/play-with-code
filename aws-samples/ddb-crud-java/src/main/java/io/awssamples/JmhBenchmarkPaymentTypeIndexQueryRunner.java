@@ -47,3 +47,20 @@ public class JmhBenchmarkPaymentTypeIndexQueryRunner {
         System.out.print("'Sync items size: " + syncQuery.search("CASH").size() + "' taken time: ");
     }
 }
+// ===========================================================================================
+// ON Macbook - i9 intel, 16BG Ram, 16 cores:
+// -------------------------------------------------------------------------------------------
+// Result "io.awssamples.JmhBenchmarkPaymentTypeIndexQueryRunner.asyncQuery":
+//  37942.521 ±(99.9%) 3242.758 ms/op [Average]
+//  (min, avg, max) = (34164.823, 37942.521, 41189.713), stdev = 2144.884
+//  CI (99.9%): [34699.763, 41185.279] (assumes normal distribution)
+//
+// Result "io.awssamples.JmhBenchmarkPaymentTypeIndexQueryRunner.syncQuery":
+//  40794.175 ±(99.9%) 4355.488 ms/op [Average]
+//  (min, avg, max) = (36721.694, 40794.175, 46066.963), stdev = 2880.886
+//  CI (99.9%): [36438.687, 45149.664] (assumes normal distribution)
+//
+// Benchmark                                           Mode  Cnt      Score      Error  Units
+// JmhBenchmarkPaymentTypeIndexQueryRunner.asyncQuery  avgt   10  37942.521 ± 3242.758  ms/op
+// JmhBenchmarkPaymentTypeIndexQueryRunner.syncQuery   avgt   10  40794.175 ± 4355.488  ms/op
+// ===========================================================================================
