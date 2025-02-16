@@ -30,13 +30,11 @@ public class DynamoDbTransactedOrderUpdate implements TransactedOrderUpdate {
                 .map(order -> Update.builder()
                         .tableName(Order.TABLE_NAME)
                         .key(Map.of(
-                                Order.ORDER_ID_FIELD_NAME, AttributeValue.fromS(order.getOrderId()),
-                                Order.PRODUCT_NUMBER_FIELD_NAME, AttributeValue.fromS(order.getProductNumber())
-                        ))
+                                "id", AttributeValue.fromS(order.getId())))
                         .expressionAttributeValues(Map.of(
-                                ":orderStatus", AttributeValue.fromS(order.getOrderStatus())
+                                ":qty", AttributeValue.fromN(String.valueOf(order.getQty()))
                         ))
-                        .updateExpression("SET %s = :orderStatus".formatted(Order.ORDER_STATUS_FIELD_NAME))
+                        .updateExpression("SET qty = :qty")
                         .returnValuesOnConditionCheckFailure(ALL_OLD)
                         .build())
                 .map(updateItem -> TransactWriteItem.builder()
