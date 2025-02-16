@@ -39,7 +39,7 @@ public class JmhBenchmarkPaymentTypeIndexQueryRunner {
 
     @Benchmark
     public void asyncQuery() {
-        System.out.print("'Async items size: " + asyncQuery.search("CASH").size() + "' taken time:");
+        System.out.print("'Async items size: " + asyncQuery.search("CASH").size() + "' taken time: ");
     }
 
     @Benchmark
