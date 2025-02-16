@@ -1,86 +1,155 @@
 package io.awssamples.domain;
 
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Setter;
+import lombok.ToString;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @DynamoDbBean
+@Setter
+@ToString
+@EqualsAndHashCode
 public class Order {
 
+    @JsonIgnore
     public static final String TABLE_NAME = "orders";
 
-    public static final String ORDER_ID_FIELD_NAME = "OrderId";
-    public static final String PRODUCT_NUMBER_FIELD_NAME = "ProductNumber";
-    public static final String ORDER_STATUS_FIELD_NAME = "OrderStatus";
-    public static final String PRODUCT_NAME_FIELD_NAME = "ProductName";
-    public static final String QUANTITY_FIELD_NAME = "Quantity";
+    @JsonProperty("id")
+    private String id;
 
-    private String orderId;
-    private String productNumber;
-    private String orderStatus;
-    private String productName;
-    private int quantity;
+    @JsonProperty("category")
+    private String category;
+
+    @JsonProperty("country")
+    private String country;
+
+    @JsonProperty("ck-country-state")
+    private String ckCountryState;
+
+    @JsonProperty("sku")
+    private String sku;
+
+    @JsonProperty("order-date")
+    private String orderDate;
+
+    @JsonProperty("query-slot-mod64")
+    private int querySlotMod64;
+
+    @JsonProperty("qty")
+    private int qty;
+
+    @JsonProperty("unit-price")
+    private double pricePerUnit;
+
+    @JsonProperty("state")
+    private String state;
+
+    @JsonProperty("payment-type")
+    private String paymentType;
+
+    @JsonProperty("comment")
+    private String comment;
 
     public Order() {
     }
 
-    public Order(String orderId,
-                 String productNumber,
-                 String orderStatus,
-                 String productName,
-                 int quantity) {
-        this.orderId = orderId;
-        this.productNumber = productNumber;
-        this.orderStatus = orderStatus;
-        this.productName = productName;
-        this.quantity = quantity;
+    @Builder
+    public Order(String id,
+                 String category,
+                 String country,
+                 String ckCountryState,
+                 String sku,
+                 String orderDate,
+                 int querySlotMod64,
+                 int qty,
+                 double pricePerUnit,
+                 String state,
+                 String paymentType,
+                 String comment) {
+        this.id = id;
+        this.category = category;
+        this.country = country;
+        this.ckCountryState = ckCountryState;
+        this.sku = sku;
+        this.orderDate = orderDate;
+        this.querySlotMod64 = querySlotMod64;
+        this.qty = qty;
+        this.pricePerUnit = pricePerUnit;
+        this.state = state;
+        this.paymentType = paymentType;
+        this.comment = comment;
     }
 
-    @DynamoDbAttribute("OrderId")
     @DynamoDbPartitionKey
-    public String getOrderId() {
-        return orderId;
+    @DynamoDbAttribute("id")
+    public String getId() {
+        return id;
     }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
+    @DynamoDbAttribute("category")
+    @DynamoDbSecondaryPartitionKey(indexNames = {"category-order-date-index", "category-query-slot-mod64-index"})
+    public String getCategory() {
+        return category;
     }
 
-    @DynamoDbSortKey
-    @DynamoDbAttribute("ProductNumber")
-    public String getProductNumber() {
-        return productNumber;
+    @DynamoDbAttribute(value = "country")
+    @DynamoDbSecondaryPartitionKey(indexNames = {"country-order-date-index"})
+    public String getCountry() {
+        return country;
     }
 
-    public void setProductNumber(String productNumber) {
-        this.productNumber = productNumber;
+    @DynamoDbAttribute(value = "ck-country-state")
+    @DynamoDbSecondaryPartitionKey(indexNames = {"ck-country-state-order-date-index"})
+    public String getCkCountryState() {
+        return ckCountryState;
     }
 
-    @DynamoDbAttribute("OrderStatus")
-    public String getOrderStatus() {
-        return orderStatus;
+    @DynamoDbAttribute(value = "sku")
+    @DynamoDbSecondaryPartitionKey(indexNames = {"sku-order-date-index"})
+    public String getSku() {
+        return sku;
     }
 
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
+    @DynamoDbAttribute(value = "order-date")
+    @DynamoDbSecondarySortKey(indexNames = {"sku-order-date-index", "country-order-date-index", "category-order-date-index", "ck-country-state-order-date-index"})
+    public String getOrderDate() {
+        return orderDate;
     }
 
-    @DynamoDbAttribute("ProductName")
-    public String getProductName() {
-        return productName;
+    @DynamoDbAttribute(value = "query-slot-mod64")
+    @DynamoDbSecondarySortKey(indexNames = {"category-query-slot-mod64-index"})
+    public int getQuerySlotMod64() {
+        return querySlotMod64;
     }
 
-    public void setProductName(String productName) {
-        this.productName = productName;
+    @DynamoDbAttribute("qty")
+    public int getQty() {
+        return qty;
     }
 
-    @DynamoDbAttribute("Quantity")
-    public int getQuantity() {
-        return quantity;
+    @DynamoDbAttribute("unit-price")
+    public double getPricePerUnit() {
+        return pricePerUnit;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    @DynamoDbAttribute(value = "state")
+    public String getState() {
+        return state;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = {"payment-type-index"})
+    @DynamoDbAttribute(value = "payment-type")
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    @DynamoDbAttribute(value = "comment")
+    public String getComment() {
+        return comment;
     }
 }
