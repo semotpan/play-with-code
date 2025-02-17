@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>io.springbootsamples</groupId>
-	<artifactId>springboot-web-samples</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>springboot-web-samples</name>
+	<artifactId>rest-api-service</artifactId>
+	<version>1.0</version>
+	<name>rest-api-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>
