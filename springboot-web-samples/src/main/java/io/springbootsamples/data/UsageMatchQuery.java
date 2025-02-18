@@ -105,7 +105,7 @@ public class UsageMatchQuery {
         }
 
         return switch (searchCriteria.totalMatchedUsage.operator) {
-            case EQ -> Objects.equals(usageMatch.totalMatchedUsage(), searchCriteria.totalMatchedUsage.value);
+            case EQ -> Objects.equals(searchCriteria.totalMatchedUsage.value, usageMatch.totalMatchedUsage());
             case GT -> searchCriteria.totalMatchedUsage.value.longValue() < usageMatch.totalMatchedUsage();
             case LT -> searchCriteria.totalMatchedUsage.value.longValue() > usageMatch.totalMatchedUsage();
             case GTE -> searchCriteria.totalMatchedUsage.value.longValue() <= usageMatch.totalMatchedUsage();
@@ -125,7 +125,7 @@ public class UsageMatchQuery {
         }
 
         return switch (searchCriteria.matchRange.operator) {
-            case EQ -> Objects.equals(usageMatch.matchRange(), searchCriteria.matchRange.value);
+            case EQ -> Objects.equals(searchCriteria.matchRange.value.intValue(), usageMatch.matchRange());
             case GT -> searchCriteria.matchRange.value.intValue() < usageMatch.matchRange();
             case LT -> searchCriteria.matchRange.value.intValue() > usageMatch.matchRange();
             case GTE -> searchCriteria.matchRange.value.intValue() <= usageMatch.matchRange();
@@ -140,12 +140,12 @@ public class UsageMatchQuery {
         }
 
         if (searchCriteria.openMatchedUsage.isRange()) {
-            return searchCriteria.openMatchedUsage.startValue.longValue() <= usageMatch.totalMatchedUsage() &&
-                    usageMatch.totalMatchedUsage() <= searchCriteria.openMatchedUsage.endValue.longValue();
+            return searchCriteria.openMatchedUsage.startValue.longValue() <= usageMatch.openMatchedUsage() &&
+                    usageMatch.openMatchedUsage() <= searchCriteria.openMatchedUsage.endValue.longValue();
         }
 
         return switch (searchCriteria.openMatchedUsage.operator) {
-            case EQ -> Objects.equals(usageMatch.openMatchedUsage(), searchCriteria.openMatchedUsage.value);
+            case EQ -> Objects.equals(searchCriteria.openMatchedUsage.value, usageMatch.openMatchedUsage());
             case GT -> searchCriteria.openMatchedUsage.value.longValue() < usageMatch.openMatchedUsage();
             case LT -> searchCriteria.openMatchedUsage.value.longValue() > usageMatch.openMatchedUsage();
             case GTE -> searchCriteria.openMatchedUsage.value.longValue() <= usageMatch.openMatchedUsage();
