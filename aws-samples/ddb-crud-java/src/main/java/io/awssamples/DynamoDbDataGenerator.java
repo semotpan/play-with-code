@@ -34,8 +34,8 @@ public class DynamoDbDataGenerator {
 
                 var tasks = new ArrayList<CompletableFuture<Void>>();
 
-                System.out.println("Generating data in parallel.");
-                for (int i = 0; i < 20_000; i++) {
+                System.out.println("Generating 10,000 orders in parallel.");
+                for (int i = 0; i < 400; i++) {
 
                     tasks.add(CompletableFuture.runAsync(() -> {
                         var orderBuilder = WriteBatch.builder(Order.class).mappedTableResource(orderTable);
@@ -59,7 +59,7 @@ public class DynamoDbDataGenerator {
         });
     }
 
-    private static Order generate() {
+    public static Order generate() {
         return Order.builder()
                 .category(categories[random.nextInt(categories.length)])
                 .ckCountryState("USA#" + states[random.nextInt(states.length)])

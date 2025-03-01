@@ -9,7 +9,9 @@ import lombok.Setter;
 import lombok.ToString;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
+@JsonInclude(NON_NULL)
 @DynamoDbBean
 @Setter
 @ToString
