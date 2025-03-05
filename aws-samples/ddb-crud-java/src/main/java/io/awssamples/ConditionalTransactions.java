@@ -1,6 +1,6 @@
 package io.awssamples;
 
-import io.awssamples.persistence.IdempotentOrderEventTransactionRepository;
+import io.awssamples.persistence.IdempotentTransactionUpsertRepository;
 
 public class ConditionalTransactions {
 
@@ -15,9 +15,12 @@ public class ConditionalTransactions {
 
         try (var dynamoDbClient = AwsClientProvider.dynamoDbClient()) {
             var enhancedClient = AwsClientProvider.dynamoDbEnhancedClient(dynamoDbClient);
+//
+//            var idempotentOrderEventTransaction = new IdempotentOrderEventTransactionRepository(dynamoDbClient, enhancedClient);
+//            System.out.println("Transaction status: " + idempotentOrderEventTransaction.apply(order));
 
-            var idempotentOrderEventTransaction = new IdempotentOrderEventTransactionRepository(dynamoDbClient, enhancedClient);
-            System.out.println("Transaction status: " + idempotentOrderEventTransaction.apply(order));
+            var idempotentTransactionUpsertRepository = new IdempotentTransactionUpsertRepository(dynamoDbClient);
+            System.out.println("Transaction status: " + idempotentTransactionUpsertRepository.apply(order));
         }
     }
 }

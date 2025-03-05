@@ -33,15 +33,15 @@ public class ConsumedEvent {
     @JsonProperty("quantity")
     private Integer quantity;
 
-    @JsonProperty("state")
-    private String state;
+    @JsonProperty("query-slot-mod64")
+    private Integer querySlotMod64;
 
     @Builder
-    public ConsumedEvent(String orderId, Instant occurredOn, Integer quantity, String state) {
+    public ConsumedEvent(String orderId, Instant occurredOn, Integer quantity, Integer querySlotMod64) {
         this.orderId = orderId;
         this.occurredOn = isNull(occurredOn) ? Instant.now() : occurredOn;
         this.quantity = quantity;
-        this.state = state;
+        this.querySlotMod64 = querySlotMod64;
     }
 
     @DynamoDbPartitionKey
@@ -50,7 +50,7 @@ public class ConsumedEvent {
         return orderId;
     }
 
-//    @DynamoDbSortKey
+    //    @DynamoDbSortKey
     @DynamoDbAttribute("occurredOn")
     public Instant getOccurredOn() {
         return occurredOn;
@@ -61,8 +61,8 @@ public class ConsumedEvent {
         return quantity;
     }
 
-    @DynamoDbAttribute("state")
-    public String getState() {
-        return state;
+    @DynamoDbAttribute("query-slot-mod64")
+    public Integer getQuerySlotMod64() {
+        return querySlotMod64;
     }
 }

@@ -36,7 +36,7 @@ public final class IdempotentOrderEventTransactionRepository implements Idempote
         var consumedEvent = ConsumedEvent.builder()
                 .orderId(order.getId())
                 .quantity(order.getQty())
-                .state(order.getState())
+                .querySlotMod64(order.getQuerySlotMod64())
                 .build();
 
         // Step 1: Check if the event already exists (FIXME: is this useless??)
@@ -108,7 +108,7 @@ public final class IdempotentOrderEventTransactionRepository implements Idempote
                                 "orderId", AttributeValue.fromS(consumedEvent.getOrderId()),
                                 "occurredOn", AttributeValue.fromS(consumedEvent.getOccurredOn().toString()),
                                 "quantity", AttributeValue.fromN(consumedEvent.getQuantity().toString()),
-                                "state", AttributeValue.fromS(consumedEvent.getState())))
+                                "query-slot-mod64", AttributeValue.fromN(consumedEvent.getQuerySlotMod64().toString())))
                         .conditionExpression("attribute_not_exists(orderId)")
                         .build())
                 .build();
